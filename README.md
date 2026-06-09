@@ -72,3 +72,22 @@ An advanced SPI Slave featuring an internal SRAM block and dual FSMs (Positive-e
 ## 🛠️ State Machine Overviews
 * **Master FSM:** Transitions through `idle` $\rightarrow$ `cpha_delay` (if applicable) $\rightarrow$ `p0` $\rightarrow$ `p1`. It accurately manages bit-shifting and clock edge generation based on the `dvsr` timer.
 * **Slave FSM:** Implements a command execution pipeline: `idle` $\rightarrow$ `chck_cmd` $\rightarrow$ `get_rd_addr` / `get_wr_addr` $\rightarrow$ `return_data` / `get_wr_data`. Employs a smart MUXing strategy between `state_reg_pos` and `state_reg_neg` depending on the `cpol == cpha` condition.
+
+## ✅ Simulation & Verification (Testbench)
+
+A comprehensive testbench (`spi_top_tb.v`) is included to verify the robustness of the design and ensure absolute compliance with the SPI protocol across all modes. 
+
+### Verification Strategy
+The testbench validates the system by performing sequential **Write** and **Read** operations targeting specific addresses inside both internal RAMs. The verification covers the following scenarios:
+
+* **System Clock & Baud Rate:** Generates a 100MHz system clock (`10ns` period) and sets the clock divisor (`dvsr = 49`) to correctly synthesize the slower SPI `SCLK`.
+* **Exhaustive Mode Testing:** * **Mode 0 (`CPOL=0`, `CPHA=0`):** Writes data `0x3F` to Address `0x03` in RAM 1, followed by a read operation to verify.
+  * **Mode 1 (`CPOL=0`, `CPHA=1`):** Writes data `0xAB` to Address `0x04` in RAM 2, followed by a read operation.
+  * **Mode 2 (`CPOL=1`, `CPHA=0`):** Writes data `0xCD` to Address `0x0A` in RAM 1, followed by a read operation.
+  * **Mode 3 (`CPOL=1`, `CPHA=1`):** Writes data `0x8F` to Address `0x0D` in RAM 2, followed by a read operation.
+* **Multiplexing Verification:** Toggling the `slave_sel` signal accurately verifies that the Top Module successfully multiplexes the `MISO` and `done_ack` signals without any data collision between the two Slaves.
+
+### How to Run Simulation
+1. Add the design files (`spi_top.v`, `spi_master.v`, `spi_ram_slave.v`) and the testbench (`spi_top_tb.v`) to your EDA tool (e.g., Vivado, ModelSim).
+2. Set `spi_top_tb` as the top-level simulation module.
+3. Run the simulation. You can monitor the `master_received_data` wire during read cycles to confirm it matches the written hex values (`0x3F`, `0xAB`, `0xCD`, `0x8F`).
