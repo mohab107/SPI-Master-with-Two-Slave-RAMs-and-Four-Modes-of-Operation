@@ -133,7 +133,3 @@ The testbench validates the system by performing sequential **Write** and **Read
   * **Mode 3 (`CPOL=1`, `CPHA=1`):** Writes data `0x8F` to Address `0x0D` in RAM 2, followed by a read operation.
 * **Multiplexing Verification:** Toggling the `slave_sel` signal accurately verifies that the Top Module successfully multiplexes the `MISO` and `done_ack` signals without any data collision between the two Slaves.
 
-### How to Run Simulation
-1. Add the design files (`spi_top.v`, `spi_master.v`, `spi_ram_slave.v`) and the testbench (`spi_top_tb.v`) to your EDA tool (e.g., Vivado, ModelSim).
-2. Set `spi_top_tb` as the top-level simulation module.
-3. Run the simulation. You can monitor the `master_received_data` wire during read cycles to confirm it matches the written hex values (`0x3F`, `0xAB`, `0xCD`, `0x8F`).
