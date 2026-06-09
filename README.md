@@ -73,6 +73,29 @@ An advanced SPI Slave featuring an internal SRAM block and dual FSMs (Positive-e
 * **Master FSM:** Transitions through `idle` $\rightarrow$ `cpha_delay` (if applicable) $\rightarrow$ `p0` $\rightarrow$ `p1`. It accurately manages bit-shifting and clock edge generation based on the `dvsr` timer.
 * **Slave FSM:** Implements a command execution pipeline: `idle` $\rightarrow$ `chck_cmd` $\rightarrow$ `get_rd_addr` / `get_wr_addr` $\rightarrow$ `return_data` / `get_wr_data`. Employs a smart MUXing strategy between `state_reg_pos` and `state_reg_neg` depending on the `cpol == cpha` condition.
 
+### SPI Slave Finite State Machine (FSM)
+The following diagram perfectly illustrates the transition flow of the SPI RAM Slave FSM, executing the custom 3-byte protocol:
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> idle : RESET
+
+    idle --> chck_cmd : Byte 1 Received (CMD)\ndone_ack=1
+    
+    chck_cmd --> get_wr_addr : Byte 2 Received\n[cmd_reg == 0] (WRITE)\ndone_ack=1
+    chck_cmd --> get_rd_addr : Byte 2 Received\n[cmd_reg == 1] (READ)\ndone_ack=1
+    chck_cmd --> idle : Invalid CMD
+
+    get_wr_addr --> get_wr_data : Byte 3 Received (WR_ADDR)\ndone_ack=1
+
+    get_wr_data --> idle : Byte 4 Received (WR_DATA)\nwe=1, done_ack=1
+
+    get_rd_addr --> return_data : Byte 3 Received (RD_ADDR)\ndone_ack=1
+
+    return_data --> idle : Byte 4 Sent via MISO\ndone_ack=1
+```
+
 ## ✅ Simulation & Verification (Testbench)
 
 A comprehensive testbench (`spi_top_tb.v`) is included to verify the robustness of the design and ensure absolute compliance with the SPI protocol across all modes. 
