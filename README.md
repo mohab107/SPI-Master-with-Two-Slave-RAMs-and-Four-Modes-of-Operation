@@ -1,11 +1,11 @@
 # SPI-Master-with-Two-Slave-RAMs-and-Four-Modes-of-Operation
 
-## 📌 Project Overview
+##  Project Overview
 This repository contains a complete RTL implementation of a custom **Serial Peripheral Interface (SPI)** system. The design features a single SPI Master controlling dual Slaves, where each Slave integrates a parameterized Random Access Memory (RAM). 
 
 Going beyond standard SPI protocols, this design introduces a **Custom Handshaking Mechanism** to ensure strict data synchronization, and fully supports all **4 SPI Modes** via dynamic Clock Polarity (CPOL) and Clock Phase (CPHA) configurations.
 
-## ✨ Key Features
+##  Key Features
 * **Full SPI Mode Support:** Supports Modes 0, 1, 2, and 3. The Slave module elegantly handles this using a dual-edge Finite State Machine (FSM) architecture.
 * **Multi-Slave Architecture:** 1 Master communicating with 2 independent RAM-integrated Slaves using built-in signal multiplexing.
 * **Custom Handshaking Protocol:** Utilizes `done_flag` and `done_ack` signals to prevent data loss and ensure the Master and Slave are perfectly synchronized during byte-level transactions.
@@ -15,7 +15,7 @@ Going beyond standard SPI protocols, this design introduces a **Custom Handshaki
 
 ---
 
-## 🏗️ System Architecture & Protocol
+##  System Architecture & Protocol
 
 ### 3-Byte Communication Protocol
 To interact with the Slave's internal memory, the Master sends data in a 3-byte sequence:
@@ -26,7 +26,7 @@ To interact with the Slave's internal memory, the Master sends data in a 3-byte 
 
 ---
 
-## 🔌 Module Breakdown & Signal Description
+##  Module Breakdown & Signal Description
 
 ### 1. `spi_top` (System Wrapper)
 Integrates the Master and both Slaves, utilizing ternary operator multiplexing to route `MISO` and `done_ack` signals based on the active Chip Select (`cs0` / `cs1`).
@@ -119,7 +119,7 @@ stateDiagram-v2
     return_data --> idle : ~slave_sel & [sent_bits == dbits] \n done_ack=1 \n / slave_sel=1
 ```
 
-## ✅ Simulation & Verification (Testbench)
+##  Simulation & Verification (Testbench)
 
 A comprehensive testbench (`spi_top_tb.v`) is included to verify the robustness of the design and ensure absolute compliance with the SPI protocol across all modes. 
 
