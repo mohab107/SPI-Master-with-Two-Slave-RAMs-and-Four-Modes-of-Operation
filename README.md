@@ -73,27 +73,50 @@ An advanced SPI Slave featuring an internal SRAM block and dual FSMs (Positive-e
 * **Master FSM:** Transitions through `idle` $\rightarrow$ `cpha_delay` (if applicable) $\rightarrow$ `p0` $\rightarrow$ `p1`. It accurately manages bit-shifting and clock edge generation based on the `dvsr` timer.
 * **Slave FSM:** Implements a command execution pipeline: `idle` $\rightarrow$ `chck_cmd` $\rightarrow$ `get_rd_addr` / `get_wr_addr` $\rightarrow$ `return_data` / `get_wr_data`. Employs a smart MUXing strategy between `state_reg_pos` and `state_reg_neg` depending on the `cpol == cpha` condition.
 
-### SPI Slave Finite State Machine (FSM)
-The following diagram perfectly illustrates the transition flow of the SPI RAM Slave FSM, executing the custom 3-byte protocol:
+### SPI Master Finite State Machine (FSM)
+The following diagram perfectly illustrates the transition flow of the SPI Master FSM:
 
 ```mermaid
 stateDiagram-v2
     direction LR
     [*] --> idle : RESET
 
-    idle --> chck_cmd : Byte 1 Received (CMD)\ndone_ack=1
+    idle --> cpha_delay : start=1 \n cpha=1
+    idle --> p0 : start=1 \n cpha=0
     
-    chck_cmd --> get_wr_addr : Byte 2 Received\n[cmd_reg == 0] (WRITE)\ndone_ack=1
-    chck_cmd --> get_rd_addr : Byte 2 Received\n[cmd_reg == 1] (READ)\ndone_ack=1
-    chck_cmd --> idle : Invalid CMD
+    cpha_delay --> p0 : timer == dvsr
+    
+    p0 --> p1 : timer == dvsr \n [sent_bits < dbits]\n (Shift MISO into si_reg)
+    
+    p1 --> p0 : timer == dvsr \n [sent_bits < dbits-1]\n (Shift so_reg)
+    p1 --> p0 : timer == dvsr \n [sent_bits == dbits-1] \n done_ack=0
+    
+    p1 --> idle : timer == dvsr \n [sent_bits == dbits-1] \n done_ack=1 \n (spi_done=1, done_flag=1)
+```
 
-    get_wr_addr --> get_wr_data : Byte 3 Received (WR_ADDR)\ndone_ack=1
+### SPI Slave Finite State Machine (FSM)
+The following diagram perfectly illustrates the transition flow of the SPI RAM Slave FSM, executing the custom 3-byte protocol:
 
-    get_wr_data --> idle : Byte 4 Received (WR_DATA)\nwe=1, done_ack=1
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> idle : RESET / slave_sel=1
 
-    get_rd_addr --> return_data : Byte 3 Received (RD_ADDR)\ndone_ack=1
+    idle --> chck_cmd : ~slave_sel & Byte Received \n (sent_bits == dbits-1) \n done_ack=1
+    
+    chck_cmd --> get_wr_addr : ~slave_sel & Byte Received \n [cmd_reg == 0] \n done_ack=1
+    chck_cmd --> get_rd_addr : ~slave_sel & Byte Received \n [cmd_reg == 1] \n done_ack=1
+    chck_cmd --> idle : Invalid CMD / slave_sel=1
+    
+    get_wr_addr --> get_wr_data : ~slave_sel & Byte Received \n done_ack=1
+    get_wr_addr --> idle : slave_sel=1
+    
+    get_wr_data --> idle : ~slave_sel & Byte Received \n we=1, done_ack=1 \n / slave_sel=1
 
-    return_data --> idle : Byte 4 Sent via MISO\ndone_ack=1
+    get_rd_addr --> return_data : ~slave_sel & Byte Received \n done_ack=1
+    get_rd_addr --> idle : slave_sel=1
+
+    return_data --> idle : ~slave_sel & [sent_bits == dbits] \n done_ack=1 \n / slave_sel=1
 ```
 
 ## ✅ Simulation & Verification (Testbench)
