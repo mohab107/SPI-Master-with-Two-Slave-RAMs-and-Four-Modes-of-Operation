@@ -69,7 +69,7 @@ An advanced SPI Slave featuring an internal SRAM block and dual FSMs (Positive-e
 
 ---
 
-## 🛠️ State Machine Overviews
+##  State Machine Overviews
 * **Master FSM:** Transitions through `idle` $\rightarrow$ `cpha_delay` (if applicable) $\rightarrow$ `p0` $\rightarrow$ `p1`. It accurately manages bit-shifting and clock edge generation based on the `dvsr` timer.
 * **Slave FSM:** Implements a command execution pipeline: `idle` $\rightarrow$ `chck_cmd` $\rightarrow$ `get_rd_addr` / `get_wr_addr` $\rightarrow$ `return_data` / `get_wr_data`. Employs a smart MUXing strategy between `state_reg_pos` and `state_reg_neg` depending on the `cpol == cpha` condition.
 
